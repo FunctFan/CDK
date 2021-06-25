@@ -3,6 +3,7 @@ package evaluate
 import (
 	"bufio"
 	"fmt"
+	"github.com/cdk-team/CDK/pkg/errors"
 	"io"
 	"log"
 	"os"
@@ -10,10 +11,6 @@ import (
 	"strings"
 	"syscall"
 )
-
-type runtimeError struct {
-	Err error
-}
 
 type Mount struct {
 	Device     string
@@ -26,7 +23,7 @@ type Mount struct {
 // runtime error if the Closer returns an error
 func checkClose(c io.Closer) {
 	if err := c.Close(); err != nil {
-		panic(&runtimeError{err})
+		panic(&errors.CDKRuntimeError{Err: err})
 	}
 }
 
@@ -68,6 +65,10 @@ func MountEscape() {
 			if !matched {
 				fmt.Printf("Device:%s Path:%s Filesystem:%s Flags:%s\n", m.Device, m.Path, m.Filesystem, m.Flags)
 			}
+		}
+		if m.Device == "lxcfs" && strings.Contains(m.Flags,"rw"){
+			fmt.Println("Find mounted lxcfs with rw flags, run `cdk run lxcfs-rw` to escape container!")
+			fmt.Printf("Device:%s Path:%s Filesystem:%s Flags:%s\n", m.Device, m.Path, m.Filesystem, m.Flags)
 		}
 	}
 }
